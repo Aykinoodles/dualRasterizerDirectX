@@ -1,12 +1,14 @@
 #include "Mesh.h"
 
-dae::Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector<uint32_t> indices)
-	
+dae::Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector<uint32_t> indices):
+	m_Indices{indices},
+	m_Vertices{vertices}
 {
 	m_pEffect = new Effect{pDevice, L"resources/PosCol3D.fx"};
+	m_pTechnique = m_pEffect->GetTechnique();
 
 	// Create Vertex Layout
-	static constexpr uint32_t numElements{ 2 };
+	static constexpr uint32_t numElements{ 3 };
 	D3D11_INPUT_ELEMENT_DESC vertexDesc[numElements]{};
 
 	vertexDesc[0].SemanticName = "POSITION";
@@ -19,10 +21,17 @@ dae::Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector
 	vertexDesc[1].AlignedByteOffset = 12;
 	vertexDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
+	vertexDesc[2].SemanticName = "TEXCOORD";
+	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
+	vertexDesc[2].AlignedByteOffset = 24;
+	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+
+
 	// input layout
 
 	D3DX11_PASS_DESC passDesc{};
-	m_pEffect->GetTechnique()->GetPassByIndex(0)->GetDesc(&passDesc);
+	m_pTechnique->GetPassByIndex(0)->GetDesc(&passDesc);
 
 	HRESULT result{ pDevice->CreateInputLayout
 		(
@@ -70,8 +79,11 @@ dae::Mesh::~Mesh()
 	if (m_pVertexLayout) m_pVertexLayout->Release();
 }
 
-void dae::Mesh::Render(ID3D11DeviceContext* pDeviceContext) const
+void dae::Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjectionMatrix, Texture* pDiffuseTexture) const
 {
+	m_pEffect->SetMatrix(worldViewProjectionMatrix);
+	m_pEffect->SetDiffuseTexture(pDiffuseTexture);
+
 	// Set primitive topology
 	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -88,10 +100,11 @@ void dae::Mesh::Render(ID3D11DeviceContext* pDeviceContext) const
 
 	// Draw
 	D3DX11_TECHNIQUE_DESC techniqueDesc{};
-	m_pEffect->GetTechnique()->GetDesc(&techniqueDesc);
-	for (UINT p{}; p < techniqueDesc.Passes; ++p)
+	m_pTechnique->GetDesc(&techniqueDesc);
+	if(m_PassIndex < techniqueDesc.Passes)
 	{
-		m_pEffect->GetTechnique()->GetPassByIndex(p)->Apply(0, pDeviceContext);
+		m_pTechnique->GetPassByIndex(m_PassIndex)->Apply(0, pDeviceContext);
 		pDeviceContext->DrawIndexed(m_NumIndices, 0, 0);
 	}
+	
 }

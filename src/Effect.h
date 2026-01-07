@@ -12,24 +12,33 @@
 #include <d3dx11effect.h>
 
 #include <string>
-
-class Effect final
+#include "Matrix.h"
+#include "Texture.h"
+namespace dae
 {
-public:
-	Effect(ID3D11Device* pDevice, const std::wstring& assetFile);
-	~Effect();
+	class Effect final
+	{
+	public:
+		Effect(ID3D11Device* pDevice, const std::wstring& assetFile);
+		~Effect();
 
-	Effect(const Effect& other) = delete;
-	Effect& operator=(const Effect& rhs) = delete;
-	Effect(Effect&& other) = delete;
-	Effect& operator=(Effect&& rhs) = delete;
+		Effect(const Effect& other) = delete;
+		Effect& operator=(const Effect& rhs) = delete;
+		Effect(Effect&& other) = delete;
+		Effect& operator=(Effect&& rhs) = delete;
 
-	ID3DX11Effect* GetEffect() const { return m_pEffect; };
-	ID3DX11EffectTechnique* GetTechnique() const { return m_pTechnique; };
+		ID3DX11Effect* GetEffect() const { return m_pEffect; };
+		ID3DX11EffectTechnique* GetTechnique() const { return m_pTechnique; };
 
-private:
-	ID3DX11Effect* m_pEffect;
-	ID3DX11EffectTechnique* m_pTechnique;
+		void SetMatrix(const Matrix& projectionMatrix);
+		void SetDiffuseTexture(Texture* pDiffuseTexture);
 
-	static ID3DX11Effect* LoadEffect(ID3D11Device* pDevice, const std::wstring& assetFile);
-};
+	private:
+		ID3DX11Effect* m_pEffect{};
+		ID3DX11EffectTechnique* m_pTechnique{};
+		ID3DX11EffectMatrixVariable* m_pMatWorldViewProjVariable{};
+		ID3DX11EffectShaderResourceVariable* m_pDiffuseMapVariable{};
+
+		static ID3DX11Effect* LoadEffect(ID3D11Device* pDevice, const std::wstring& assetFile);
+	};
+}

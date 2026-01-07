@@ -1,3 +1,4 @@
+#pragma once 
 //External includes
 #include "SDL.h"
 #include "SDL_surface.h"
@@ -71,6 +72,8 @@ int main(int argc, char* args[])
 			case SDL_KEYUP:
 				//Test for a key
 				//if (e.key.keysym.scancode == SDL_SCANCODE_X)
+				if (e.key.keysym.scancode == SDL_SCANCODE_F2)
+					pRenderer->ChangeFilteringMethod();
 				break;
 			default: ;
 			}

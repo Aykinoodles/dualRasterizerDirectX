@@ -15,9 +15,18 @@
 // Framework Headers
 #include "Timer.h"
 #include "Mesh.h"
+#include "Camera.h"
+#include "Texture.h"
+#include "Utils.h"
 
 namespace dae
 {
+	enum class FilteringMethod
+	{
+		Point,
+		Linear,
+		Anisotropic
+	};
 	class Renderer final
 	{
 	public:
@@ -32,6 +41,8 @@ namespace dae
 		void Update(const Timer* pTimer);
 		void Render() const;
 
+		void ChangeFilteringMethod();
+
 	private:
 		SDL_Window* m_pWindow{};
 
@@ -39,9 +50,14 @@ namespace dae
 		int m_Height{};
 
 		bool m_IsInitialized{ false };
+		static const int FILTERMETHODCOUNT{3};
+		//Mesh Info
 
 		Mesh* m_pMesh{};
+		Texture* m_pDiffuseTexture{};
+		Camera* m_Camera{};
 
+		FilteringMethod m_ActiveFilterMethod{};
 		//DIRECTX
 		HRESULT InitializeDirectX();
 		ID3D11Device* m_pDevice{};
