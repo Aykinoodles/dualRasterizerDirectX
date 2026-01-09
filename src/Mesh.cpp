@@ -1,11 +1,20 @@
 #include "Mesh.h"
 
-dae::Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector<uint32_t> indices):
+dae::Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector<uint32_t> indices , bool isShadedFlat):
 	m_Indices{indices},
-	m_Vertices{vertices}
+	m_Vertices{vertices},
+	m_IsShadedFlat{isShadedFlat}
 {
-	m_pEffect = new Effect{pDevice, L"resources/PosCol3D.fx"};
-	m_pTechnique = m_pEffect->GetTechnique();
+	if(m_IsShadedFlat)
+	{
+		m_pEffectFlat = new EffectFlat{ pDevice, L"./resources/Fire.fx" };
+		m_pTechnique = m_pEffectFlat->GetTechnique();
+	}
+	else
+	{
+		m_pEffectCombined = new EffectCombined{ pDevice, L"./resources/PosCol3D.fx" };
+		m_pTechnique = m_pEffectCombined->GetTechnique();
+	}
 
 	// Create Vertex Layout
 	static constexpr uint32_t numElements{ 5 };
@@ -85,7 +94,8 @@ dae::Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector
 
 dae::Mesh::~Mesh()
 {
-	delete m_pEffect;
+	delete m_pEffectCombined;
+	delete m_pEffectFlat;
 	if (m_pIndexBuffer) m_pIndexBuffer->Release();
 	if (m_pVertexBuffer) m_pVertexBuffer->Release();
 	if (m_pVertexLayout) m_pVertexLayout->Release();
@@ -94,14 +104,25 @@ dae::Mesh::~Mesh()
 void dae::Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjectionMatrix, const Matrix& worldMatrix, const Vector3& cameraPosition,
 	Texture* pDiffuseTexture, Texture* pNormalMapTexture, Texture* pSpecularMapTexture, Texture* pGlossinessTexture) const
 {
-	m_pEffect->SetProjectionMatrix(worldViewProjectionMatrix);
-	m_pEffect->SetWorldMatrix(worldMatrix);
-	m_pEffect->SetCameraPosition(cameraPosition);
+	if (m_IsShadedFlat)
+	{
+		m_pEffectFlat->SetProjectionMatrix(worldViewProjectionMatrix);
+		m_pEffectFlat->SetWorldMatrix(worldMatrix);
+				 
+		m_pEffectFlat->SetDiffuseTexture(pDiffuseTexture);
+	}
+	else
+	{
+		m_pEffectCombined->SetProjectionMatrix(worldViewProjectionMatrix);
+		m_pEffectCombined->SetWorldMatrix(worldMatrix);
+		m_pEffectCombined->SetCameraPosition(cameraPosition);
 
-	m_pEffect->SetDiffuseTexture(pDiffuseTexture);
-	m_pEffect->SetNormalTexture(pNormalMapTexture);
-	m_pEffect->SetSpecularTexture(pSpecularMapTexture);
-	m_pEffect->SetGlossinessTexture(pGlossinessTexture);
+		m_pEffectCombined->SetDiffuseTexture(pDiffuseTexture);
+		m_pEffectCombined->SetNormalTexture(pNormalMapTexture);
+		m_pEffectCombined->SetSpecularTexture(pSpecularMapTexture);
+		m_pEffectCombined->SetGlossinessTexture(pGlossinessTexture);
+	}
+	
 
 	// Set primitive topology
 	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

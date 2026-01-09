@@ -47,19 +47,23 @@ Renderer::Renderer(SDL_Window* pWindow) :
 	};
 	const std::vector<uint32_t> indices_quad{ 0, 1, 2, 2, 1, 3 };
 
-	//m_pMesh = new Mesh{ m_pDevice, vertices_triangle, indices_triangle };
-	//m_pMesh = new Mesh{ m_pDevice, vertices_quad, indices_quad };
 	std::vector<Vertex> vertices_vehicle{};
-	std::vector<uint32_t> vertices_indices{};
-	Utils::ParseOBJ("./resources/vehicle.obj", vertices_vehicle, vertices_indices);
-	m_pMesh = new Mesh{ m_pDevice,vertices_vehicle ,vertices_indices };
+	std::vector<uint32_t> vertices_indices_vehicle{};
+	Utils::ParseOBJ("./resources/vehicle.obj", vertices_vehicle, vertices_indices_vehicle);
+	m_pMeshVehicle = new Mesh{ m_pDevice,vertices_vehicle ,vertices_indices_vehicle };
+
+	std::vector<Vertex> vertices_fire{};
+	std::vector<uint32_t> vertices_indices_fire{};
+	Utils::ParseOBJ("./resources/fireFX.obj", vertices_fire, vertices_indices_fire);
+	m_pMeshFire = new Mesh{ m_pDevice,vertices_fire ,vertices_indices_fire ,true};
 
 	const float aspectRatio{ static_cast<float>(m_Width) / static_cast<float>(m_Height) };
 	m_Camera = new Camera();
 	m_Camera->Initialize(45.f, { 0.f, 0.f, -50.f }, aspectRatio);
 
-	//m_pDiffuseTexture = Texture::LoadFromFile("./resources/uv_grid_2.png", m_pDevice);
-	m_pDiffuseTexture = Texture::LoadFromFile("./resources/vehicle_diffuse.png", m_pDevice);
+	m_pFireDiffuseTexture = Texture::LoadFromFile("./resources/fireFX_diffuse.png", m_pDevice);
+
+	m_pVehicleDiffuseTexture = Texture::LoadFromFile("./resources/vehicle_diffuse.png", m_pDevice);
 	m_pNormalMapTexture = Texture::LoadFromFile("./resources/vehicle_normal.png", m_pDevice);
 	m_pGlossinessMapTexture = Texture::LoadFromFile("./resources/vehicle_gloss.png", m_pDevice);
 	m_pSpecularMapTexture = Texture::LoadFromFile("./resources/vehicle_specular.png", m_pDevice);
@@ -67,9 +71,11 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 Renderer::~Renderer()
 {
-	delete m_pMesh;
+	delete m_pMeshVehicle;
+	delete m_pMeshFire;
 	
-	delete m_pDiffuseTexture;
+	delete m_pVehicleDiffuseTexture;
+	delete m_pFireDiffuseTexture;
 	delete m_pNormalMapTexture;
 	delete m_pGlossinessMapTexture;
 	delete m_pSpecularMapTexture;
@@ -93,7 +99,7 @@ void Renderer::Update(const Timer* pTimer)
 {
 	m_Camera->Update(pTimer);
 	if(m_IsRotating)
-		m_Camera->m_WorldMatrix = Matrix::CreateRotationY((90 * TO_RADIANS) * pTimer->GetElapsed()) * m_Camera->m_WorldMatrix;
+		m_Camera->m_WorldMatrix = Matrix::CreateRotationY((45 * TO_RADIANS) * pTimer->GetElapsed()) * m_Camera->m_WorldMatrix;
 }
 
 
@@ -102,14 +108,16 @@ void Renderer::Render() const
 	if (!m_IsInitialized)
 		return;
 	// Clear RTV and DSV
-	constexpr float color[4] = { 0.f,0.f,0.3f,1.f };
+	constexpr float color[4] = { .39f, .59f, .93f,1.f };
 	m_pDeviceContext->ClearRenderTargetView(m_pRenderTargetView, color);
 	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
 	// Set pipline and Invoke Draw calls
+	m_pMeshVehicle->Render(m_pDeviceContext,m_Camera->GetProjectionMatrix(),m_Camera->m_WorldMatrix,m_Camera->GetOrigin(),
+		m_pVehicleDiffuseTexture,m_pNormalMapTexture,m_pSpecularMapTexture,m_pGlossinessMapTexture);
 
-	m_pMesh->Render(m_pDeviceContext,m_Camera->GetProjectionMatrix(),m_Camera->m_WorldMatrix,m_Camera->GetOrigin(),
-		m_pDiffuseTexture,m_pNormalMapTexture,m_pSpecularMapTexture,m_pGlossinessMapTexture);
+	m_pMeshFire->Render(m_pDeviceContext, m_Camera->GetProjectionMatrix(), m_Camera->m_WorldMatrix, m_Camera->GetOrigin(),
+		m_pFireDiffuseTexture, m_pNormalMapTexture, m_pSpecularMapTexture, m_pGlossinessMapTexture);
 
 	// presnet backbuffer swap
 	m_pSwapChain->Present(0, 0);
@@ -121,7 +129,7 @@ void dae::Renderer::ChangeFilteringMethod()
 	int filteringMethod{ static_cast<int>(m_ActiveFilterMethod) };
 	m_ActiveFilterMethod = FilteringMethod((filteringMethod + 1) % FILTERMETHODCOUNT);
 
-	m_pMesh->ChangeFilteringMethod(static_cast<UINT>(m_ActiveFilterMethod));
+	m_pMeshVehicle->ChangeFilteringMethod(static_cast<UINT>(m_ActiveFilterMethod));
 
 	switch (m_ActiveFilterMethod)
 	{

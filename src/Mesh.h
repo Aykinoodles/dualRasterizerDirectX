@@ -14,7 +14,8 @@
 
 #include <Vector>
 #include "Math.h"
-#include "Effect.h"
+#include "EffectCombined.h"
+#include "EffectFlat.h"
 #include "Texture.h"
 
 namespace dae
@@ -31,7 +32,9 @@ namespace dae
 	class Mesh final
 	{
 	public:
-		Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector<uint32_t> indices);
+		Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector<uint32_t> indices,bool isShadedFlat);
+		Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector<uint32_t> indices) :
+			Mesh(pDevice, vertices, indices, false) {};
 		~Mesh();
 
 		Mesh(const Mesh& other) = delete;
@@ -46,7 +49,8 @@ namespace dae
 	private:
 		
 		ID3DX11EffectTechnique* m_pTechnique{};
-		Effect* m_pEffect{};
+		EffectCombined* m_pEffectCombined{};
+		EffectFlat* m_pEffectFlat{};
 
 		ID3D11InputLayout* m_pVertexLayout{};
 		ID3D11Buffer* m_pVertexBuffer{};
@@ -57,5 +61,6 @@ namespace dae
 
 		uint32_t m_NumIndices{};
 		UINT m_PassIndex{};
+		bool m_IsShadedFlat{ false };
 	};
 }

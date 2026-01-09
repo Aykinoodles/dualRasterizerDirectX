@@ -53,6 +53,49 @@ struct VS_OUTPUT
     float3 Tangent : TANGENT;
 };
 
+// Rasterizer, Blend and DepthStencilState
+
+RasterizerState gRasterizerState
+{
+    CullMode = none;
+    FrontCounterClockwise = false; //default
+};
+
+
+BlendState gBlendState
+{
+    BlendEnable[0] = true;
+    SrcBlend = src_alpha;
+    DestBlend = inv_src_alpha;
+    BlendOp = add;
+    SrcBlendAlpha = zero;
+    DestBlendAlpha = zero;
+    BlendOpAlpha = add;
+    RenderTargetWriteMask[0] = 0x0F;
+};
+
+DepthStencilState gDepthStencilState
+{
+    DepthEnable = true;
+    DepthWriteMask = all;
+    DepthFunc = less;
+    StencilEnable = false;
+    // Others are redundant because StencilEnable is false (for demo only)
+    StencilReadMask = 0;
+    StencilWriteMask = 0;
+
+    FrontFaceStencilFunc = always;
+    BackFaceStencilFunc = always;
+
+    FrontFaceStencilDepthFail = keep;
+    BackFaceStencilDepthFail = keep;
+
+    FrontFaceStencilPass = keep;
+    BackFaceStencilPass = keep;
+
+    FrontFaceStencilFail = keep;
+    BackFaceStencilFail = keep;
+};
 
 // Functions
 
@@ -154,18 +197,27 @@ technique11 DefaultTechnique
 {
 	pass P0
 	{
+        SetRasterizerState(gRasterizerState);
+        SetDepthStencilState(gDepthStencilState, 0);
+        SetBlendState(gBlendState, float4(0.0f, 0.0f, 0.0f, 0.0f), 0xFFFFFFFF);
 		SetVertexShader(CompileShader(vs_5_0, VS()));
 		SetGeometryShader(NULL);
         SetPixelShader(CompileShader(ps_5_0, PS_Point()));
     }
 	pass P1
 	{
+        SetRasterizerState(gRasterizerState);
+        SetDepthStencilState(gDepthStencilState, 0);
+        SetBlendState(gBlendState, float4(0.0f, 0.0f, 0.0f, 0.0f), 0xFFFFFFFF);
 		SetVertexShader(CompileShader(vs_5_0, VS()));
 		SetGeometryShader(NULL);
         SetPixelShader(CompileShader(ps_5_0, PS_Linear()));
     }
 	pass P2
 	{
+        SetRasterizerState(gRasterizerState);
+        SetDepthStencilState(gDepthStencilState, 0);
+        SetBlendState(gBlendState, float4(0.0f, 0.0f, 0.0f, 0.0f), 0xFFFFFFFF);
 		SetVertexShader(CompileShader(vs_5_0, VS()));
 		SetGeometryShader(NULL);
         SetPixelShader(CompileShader(ps_5_0, PS_Anisotropic()));

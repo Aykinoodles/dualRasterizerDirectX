@@ -55,8 +55,11 @@ namespace dae
 		static const int FILTERMETHODCOUNT{3};
 		//Mesh Info
 
-		Mesh* m_pMesh{};
-		Texture* m_pDiffuseTexture{};
+		Mesh* m_pMeshVehicle{};
+		Mesh* m_pMeshFire{};
+
+		Texture* m_pVehicleDiffuseTexture{};
+		Texture* m_pFireDiffuseTexture{};
 		Texture* m_pNormalMapTexture{};
 		Texture* m_pGlossinessMapTexture{};
 		Texture* m_pSpecularMapTexture{};

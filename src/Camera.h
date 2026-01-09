@@ -49,8 +49,7 @@ namespace dae
 		{
 
 			const float deltaTime = pTimer->GetElapsed();
-			const float m_MovementSpeed{ 3.f };
-			const float rotationSpeed{ 10.f };
+			const float rotationSpeed{ 100.f };
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
@@ -133,7 +132,7 @@ namespace dae
 		Matrix m_ProjectionMatrix{};
 
 		float m_MouseSensitivity{ 5.f };
-		float m_MovementSpeed{ 1.f };
+		float m_MovementSpeed{ 50.f };
 
 		
 	};
