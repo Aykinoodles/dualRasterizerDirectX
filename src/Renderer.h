@@ -42,6 +42,7 @@ namespace dae
 		void Render() const;
 
 		void ChangeFilteringMethod();
+		void ToggleRotation() { m_IsRotating = !m_IsRotating; };
 
 	private:
 		SDL_Window* m_pWindow{};
@@ -50,11 +51,15 @@ namespace dae
 		int m_Height{};
 
 		bool m_IsInitialized{ false };
+		bool m_IsRotating{ true };
 		static const int FILTERMETHODCOUNT{3};
 		//Mesh Info
 
 		Mesh* m_pMesh{};
 		Texture* m_pDiffuseTexture{};
+		Texture* m_pNormalMapTexture{};
+		Texture* m_pGlossinessMapTexture{};
+		Texture* m_pSpecularMapTexture{};
 		Camera* m_Camera{};
 
 		FilteringMethod m_ActiveFilterMethod{};

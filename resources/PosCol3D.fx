@@ -1,6 +1,16 @@
 // Globals
+float3 gCameraPosition : CameraPosition;
+
 float4x4 gWorldViewProj : WorldViewProjection;
+float4x4 gWorldMatrix : WorldMatrix;
+
 Texture2D gDiffuseMap : DiffuseMap;
+Texture2D gNormalMap : NormalMap;
+Texture2D gSpecularMap : SpecularMap;
+Texture2D gGlossinessMap : GlossinessMap;
+#define LIGHTDIRECTION float3(0.577f, -0.577f, 0.577f)
+#define PI 3.1415926535
+#define KD 7
 
 SamplerState samPoint
 {
@@ -28,17 +38,55 @@ SamplerState samAnisotropic
 struct VS_INPUT
 {
 	float3 Position : POSITION;
-	float3 Color : COLOR;
+    float3 Color : COLOR;
     float2 Uv : TEXCOORD;
+    float3 Normal : NORMAL;
+    float3 Tangent : TANGENT;
 };
 
 struct VS_OUTPUT
 {
-	float4 Position : SV_POSITION;
-	float3 Color : COLOR;
+    float4 Position : SV_POSITION;
+    float4 WorldPosition : WORLD;
     float2 Uv : TEXCOORD;
+    float3 Normal : NORMAL;
+    float3 Tangent : TANGENT;
 };
 
+
+// Functions
+
+float4 SampleNormal(float3 normalInput, float3 tangentInput, float4 normalSample)
+{
+    
+    float3 biNormal = cross(normalInput, tangentInput);
+    float4x4 tangentSpaceAxis = float4x4(float4(tangentInput, 1.f), float4(biNormal, 1.f), float4(normalInput, 1.f), float4(0.f, 0.f, 0.f, 0.f));
+
+    float4 normal = float4(2 * normalSample.xyz - float3(1.f, 1.f, 1.f), 1.f);
+    
+    return mul(normal, tangentSpaceAxis);
+}
+
+float3 PhongSpecular(float3 worldPosition, float3 normal, float glossSample, float4 specularSample)
+{
+    float shininess = 25;
+    float exp = glossSample * shininess;
+    
+    float3 invViewDirection = normalize(gCameraPosition - worldPosition);
+    
+    float3 reflectedRay = reflect(-LIGHTDIRECTION, normal);
+    float angle = saturate(dot(reflectedRay, -invViewDirection));
+    
+    return pow(angle, exp) * specularSample.rgb;
+}
+
+float4 ObservedArea(float3 normal)
+{
+    float4 colour;
+    colour.rgb = saturate(dot(normal, -LIGHTDIRECTION));
+    colour.a = 1.f;
+    return colour;
+}
 
 //------------------------------------------------
 // Vertex Shader
@@ -46,27 +94,56 @@ struct VS_OUTPUT
 VS_OUTPUT VS(VS_INPUT input)
 {
 	VS_OUTPUT output = (VS_OUTPUT)0;
-    output.Position = mul(float4(input.Position, 1.0f), gWorldViewProj);
-	output.Color = input.Color;
+
+    float3 modelSpacePosition = input.Position;
+
+    output.Position = mul(float4(modelSpacePosition, 1.0f), gWorldViewProj);
+    output.WorldPosition = mul(float4(input.Position, 1.f), gWorldViewProj);
     output.Uv = input.Uv;
+    
+    output.Normal = normalize(mul(input.Normal, (float3x3)gWorldMatrix));
+    output.Tangent = normalize(mul(input.Tangent, (float3x3)gWorldMatrix));
 	return output;
 }
+
+
 
 //------------------------------------------------
 // Pixel Shader
 //------------------------------------------------
 float4 PS_Point(VS_OUTPUT input) : SV_TARGET
 {
-    return gDiffuseMap.Sample(samPoint, input.Uv);
+    float4 lambert = (gDiffuseMap.Sample(samPoint, input.Uv) * KD) / PI;
+    
+    float4 normal = SampleNormal(input.Normal, input.Tangent, gNormalMap.Sample(samPoint, input.Uv));
+    
+    float3 phong = PhongSpecular(input.WorldPosition.xyz, normal.xyz, gGlossinessMap.Sample(samPoint, input.Uv).r, gSpecularMap.Sample(samPoint, input.Uv));
+    
+    lambert.rgb += phong;
+    return lambert * ObservedArea(normal.xyz);
 }
 
 float4 PS_Linear(VS_OUTPUT input) : SV_TARGET
 {
-    return gDiffuseMap.Sample(samLinear, input.Uv);
+    float4 lambert = (gDiffuseMap.Sample(samLinear, input.Uv) * KD) / PI;
+    
+    float4 normal = SampleNormal(input.Normal, input.Tangent, gNormalMap.Sample(samLinear, input.Uv));
+    
+    float3 phong = PhongSpecular(input.WorldPosition.xyz, normal.xyz, gGlossinessMap.Sample(samLinear, input.Uv).r, gSpecularMap.Sample(samLinear, input.Uv));
+    
+    lambert.rgb += phong;
+    return lambert * ObservedArea(normal.xyz);
 }
 float4 PS_Anisotropic(VS_OUTPUT input) : SV_TARGET
 {
-    return gDiffuseMap.Sample(samAnisotropic, input.Uv);
+    float4 lambert = (gDiffuseMap.Sample(samAnisotropic, input.Uv) * KD) / PI;
+    
+    float3 normal = SampleNormal(input.Normal, input.Tangent, gNormalMap.Sample(samAnisotropic, input.Uv));
+    
+    float3 phong = PhongSpecular(input.WorldPosition.xyz, normal.xyz, gGlossinessMap.Sample(samAnisotropic, input.Uv).r, gSpecularMap.Sample(samAnisotropic, input.Uv));
+    
+    lambert.rgb += phong;
+    return lambert * ObservedArea(normal.xyz);
 }
 
 

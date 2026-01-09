@@ -8,8 +8,10 @@ dae::Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector
 	m_pTechnique = m_pEffect->GetTechnique();
 
 	// Create Vertex Layout
-	static constexpr uint32_t numElements{ 3 };
+	static constexpr uint32_t numElements{ 5 };
 	D3D11_INPUT_ELEMENT_DESC vertexDesc[numElements]{};
+
+	;
 
 	vertexDesc[0].SemanticName = "POSITION";
 	vertexDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
@@ -25,6 +27,16 @@ dae::Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex> vertices, std::vector
 	vertexDesc[2].Format = DXGI_FORMAT_R32G32_FLOAT;
 	vertexDesc[2].AlignedByteOffset = 24;
 	vertexDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[3].SemanticName = "NORMAL";
+	vertexDesc[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[3].AlignedByteOffset = 32;
+	vertexDesc[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+
+	vertexDesc[4].SemanticName = "TANGENT";
+	vertexDesc[4].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	vertexDesc[4].AlignedByteOffset = 44;
+	vertexDesc[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 
 
 
@@ -79,10 +91,17 @@ dae::Mesh::~Mesh()
 	if (m_pVertexLayout) m_pVertexLayout->Release();
 }
 
-void dae::Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjectionMatrix, Texture* pDiffuseTexture) const
+void dae::Mesh::Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjectionMatrix, const Matrix& worldMatrix, const Vector3& cameraPosition,
+	Texture* pDiffuseTexture, Texture* pNormalMapTexture, Texture* pSpecularMapTexture, Texture* pGlossinessTexture) const
 {
-	m_pEffect->SetMatrix(worldViewProjectionMatrix);
+	m_pEffect->SetProjectionMatrix(worldViewProjectionMatrix);
+	m_pEffect->SetWorldMatrix(worldMatrix);
+	m_pEffect->SetCameraPosition(cameraPosition);
+
 	m_pEffect->SetDiffuseTexture(pDiffuseTexture);
+	m_pEffect->SetNormalTexture(pNormalMapTexture);
+	m_pEffect->SetSpecularTexture(pSpecularMapTexture);
+	m_pEffect->SetGlossinessTexture(pGlossinessTexture);
 
 	// Set primitive topology
 	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

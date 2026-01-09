@@ -21,9 +21,11 @@ namespace dae
 {
 	struct Vertex
 	{
-		Vector3 position;
-		ColorRGB color;
-		Vector2 uv;
+		Vector3 position{};
+		ColorRGB color{};
+		Vector2 uv{};
+		Vector3 normal{};
+		Vector3 tangent{};
 	};
 	
 	class Mesh final
@@ -37,7 +39,8 @@ namespace dae
 		Mesh(Mesh&& other) = delete;
 		Mesh& operator=(Mesh&& rhs) = delete;
 	
-		void Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjectionMatrix,Texture* pDiffuseTexture) const;
+		void Render(ID3D11DeviceContext* pDeviceContext, const Matrix& worldViewProjectionMatrix, const Matrix& worldMatrix,const Vector3& cameraPosition,
+			Texture* pDiffuseTexture, Texture* pNormalMapTexture, Texture* pSpecularMapTexture, Texture* pGlossinessTexture) const;
 		void ChangeFilteringMethod(UINT passIndex) { m_PassIndex = passIndex; };
 
 	private:

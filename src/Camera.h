@@ -31,13 +31,7 @@ namespace dae
 
 		void CalculateViewMatrix()
 		{
-			//right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
-			//up = Vector3::Cross(forward, right);
-			//
-			//m_InvViewMatrix = Matrix{ right,up,forward,m_Origin };
-			//m_ViewMatrix = m_InvViewMatrix.Inverse();
-
-
+			
 			m_ViewMatrix = Matrix::CreateLookAtLH(m_Origin, m_Origin + forward,up);
 			
 		}
@@ -117,6 +111,8 @@ namespace dae
 
 		Matrix GetViewMatrix() const { return m_ViewMatrix; };
 		Matrix GetProjectionMatrix() const { return m_ProjectionMatrix; };
+		Vector3 GetOrigin() const { return m_Origin; };
+		// public because I rotate the model in the renderer
 		Matrix m_WorldMatrix{ Matrix::CreateIdentity() };
 	private:
 

@@ -60,12 +60,19 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 	//m_pDiffuseTexture = Texture::LoadFromFile("./resources/uv_grid_2.png", m_pDevice);
 	m_pDiffuseTexture = Texture::LoadFromFile("./resources/vehicle_diffuse.png", m_pDevice);
+	m_pNormalMapTexture = Texture::LoadFromFile("./resources/vehicle_normal.png", m_pDevice);
+	m_pGlossinessMapTexture = Texture::LoadFromFile("./resources/vehicle_gloss.png", m_pDevice);
+	m_pSpecularMapTexture = Texture::LoadFromFile("./resources/vehicle_specular.png", m_pDevice);
 }
 
 Renderer::~Renderer()
 {
 	delete m_pMesh;
+	
 	delete m_pDiffuseTexture;
+	delete m_pNormalMapTexture;
+	delete m_pGlossinessMapTexture;
+	delete m_pSpecularMapTexture;
 	delete m_Camera;
 	if (m_pRenderTargetView) m_pRenderTargetView->Release();
 	if (m_pRenderTargetBuffer) m_pRenderTargetBuffer->Release();
@@ -85,7 +92,8 @@ Renderer::~Renderer()
 void Renderer::Update(const Timer* pTimer)
 {
 	m_Camera->Update(pTimer);
-	m_Camera->m_WorldMatrix = Matrix::CreateRotationY((90 * TO_RADIANS) * pTimer->GetElapsed()) * m_Camera->m_WorldMatrix;
+	if(m_IsRotating)
+		m_Camera->m_WorldMatrix = Matrix::CreateRotationY((90 * TO_RADIANS) * pTimer->GetElapsed()) * m_Camera->m_WorldMatrix;
 }
 
 
@@ -100,7 +108,8 @@ void Renderer::Render() const
 
 	// Set pipline and Invoke Draw calls
 
-	m_pMesh->Render(m_pDeviceContext,m_Camera->GetProjectionMatrix(),m_pDiffuseTexture);
+	m_pMesh->Render(m_pDeviceContext,m_Camera->GetProjectionMatrix(),m_Camera->m_WorldMatrix,m_Camera->GetOrigin(),
+		m_pDiffuseTexture,m_pNormalMapTexture,m_pSpecularMapTexture,m_pGlossinessMapTexture);
 
 	// presnet backbuffer swap
 	m_pSwapChain->Present(0, 0);

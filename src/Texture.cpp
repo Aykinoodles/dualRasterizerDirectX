@@ -62,7 +62,7 @@ dae::Texture* dae::Texture::LoadFromFile(const std::string& path, ID3D11Device* 
 {
     SDL_Surface* pSurface = IMG_Load(path.c_str());
     if (!pSurface) return nullptr;
-
+    
     return new dae::Texture(pSurface, devicePtr);
 }
 
@@ -74,9 +74,6 @@ dae::ColorRGB dae::Texture::Sample(Vector2 uv)
     uint8_t r{};
     uint8_t g{};
     uint8_t b{};
-
-    
-
 
     SDL_GetRGB(m_pSurfacePixels[static_cast<int>(u + (v * m_pSurface->w))], m_pSurface->format, &r, &g, &b);
 
